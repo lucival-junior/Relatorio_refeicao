@@ -12,12 +12,9 @@ almoco = st.sidebar.checkbox('Almoco')
 lanche = st.sidebar.checkbox('Lanche')
 ceia = st.sidebar.checkbox('Ceia')
 
-st.sidebar.date_input('Data')
-
 if cafe:
     number = st.number_input('Insert a number')
     st.write('The current number is ', number)
-
 
 out_file = "modelo1.txt"
 out_file2 = "saida.txt"
