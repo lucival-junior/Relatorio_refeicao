@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from PIL import Image
 import  time, datetime
+import base64
 import plotly.offline as py
 import plotly.graph_objs as go
 import altair as alt
@@ -11,7 +12,7 @@ import matplotlib.pyplot as plt
 
 #carrega logo do empresa
 image = Image.open('sococo-logo.png')
-st.image(image,width=200 , caption='Relatório de Refeições')
+st.sidebar.image(image,width=300 , caption='Relatório de Refeições')
 
 #variaveis de arquivo saida
 primeira_limpeza = "primeira_limpeza.txt"
@@ -57,8 +58,8 @@ if uploaded_file is not None:
 
     with st.spinner('Aguarde o carregamento do arquivo...'):
         time.sleep(5)
-    st.success('Concluido!')
-    st.write("Shape do Dataset", df)
+    #st.success('Concluido!')
+    st.write(df)
 
     #st.checkbox('Gerar Grafico')#inicio de graficos
     quantidade_cafe = sum((df['Refeicao']=='CAFE') )
@@ -68,7 +69,7 @@ if uploaded_file is not None:
     total = (quantidade_cafe + quantidade_almoco +
              quantidade_lanche + quantidade_ceia)
 
-    if st.checkbox('Gerar Grafico'):
+    if st.sidebar.checkbox('Número de Refeições'):
         lista_grafico = [quantidade_cafe,
                         quantidade_almoco,
                         quantidade_lanche,
@@ -81,19 +82,32 @@ if uploaded_file is not None:
         trace = go.Bar(x=['Café', 'Almoço', 'Lanche', 'Ceia', 'Total'],
                        y=lista_grafico)
 
-        legenda = go.Layout(title='Número de Refeições',
+        legenda = go.Layout(title='Quantidade de refeições por tipo',
                             xaxis={'title': 'Tipo de Refeição'},
                             yaxis={'title': 'Quantidade'}
                             )
         figura = go.Figure(data=trace, layout=legenda)
         st.write(figura)
-    if st.checkbox('Filtro'):
-        t = st.time_input('Set an alarm for', datetime.time(0, 0))
-        st.write('Alarm is set for', t)
-        hora_inicial = st.text_input('Hora inicial', '0:00')
-        hora_final = st.text_input('Hora final', '22:00')
 
-        df.loc[(df['Hora'] >= hora_inicial) & (df['Hora']<= hora_final)]
+    if st.sidebar.checkbox('Filtro por horário'):
+        hora_inicial = st.sidebar.text_input('Hora inicial', '0:00')
+        hora_final = st.sidebar.text_input('Hora final', '22:00')
 
+        filtro_hora = df.loc[(df['Hora'] >= hora_inicial) & (df['Hora']<= hora_final)]
+        st.write(filtro_hora)
 
+        #funcao para gerar downlod da data frame tratado
+        def download_link(object_to_download, download_filename, download_link_text):
+
+            if isinstance(object_to_download, pd.DataFrame):
+                object_to_download = object_to_download.to_csv(index=False)
+
+            # some strings <-> bytes conversions necessary here
+            b64 = base64.b64encode(object_to_download.encode()).decode()
+
+            return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+
+        if st.button('Download'):
+            tmp_download_link = download_link(filtro_hora, 'arquivo_tratado.txt', 'Clique para iniciar o download')
+            st.markdown(tmp_download_link, unsafe_allow_html=True)
 
