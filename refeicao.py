@@ -60,7 +60,7 @@ if uploaded_file is not None:
         time.sleep(5)
     #st.success('Concluido!')
     st.write(df)
-
+    st.write("Linha / Colunas: ", df.shape)
     #st.checkbox('Gerar Grafico')#inicio de graficos
     quantidade_cafe = sum((df['Refeicao']=='CAFE') )
     quantidade_almoco = sum((df['Refeicao']=='ALMOÇO') )
@@ -90,12 +90,12 @@ if uploaded_file is not None:
         st.write(figura)
 
     if st.sidebar.checkbox('Filtro por horário'):
-        hora_inicial = st.sidebar.text_input('Hora inicial', '0:00')
-        hora_final = st.sidebar.text_input('Hora final', '22:00')
+        hora_inicial = st.sidebar.text_input('Hora inicial', '06:00')
+        hora_final = st.sidebar.text_input('Hora final', '08:00')
 
         filtro_hora = df.loc[(df['Hora'] >= hora_inicial) & (df['Hora']<= hora_final)]
         st.write(filtro_hora)
-
+        st.write("Linha / Colunas: ",filtro_hora.shape)
         #funcao para gerar downlod da data frame tratado
         def download_link(object_to_download, download_filename, download_link_text):
 
@@ -108,6 +108,6 @@ if uploaded_file is not None:
             return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
         if st.button('Download'):
-            tmp_download_link = download_link(filtro_hora, 'arquivo_tratado.txt', 'Clique para iniciar o download')
+            tmp_download_link = download_link(filtro_hora, 'arquivo_tratado.txt', 'Clique para salvar o arquivo')
             st.markdown(tmp_download_link, unsafe_allow_html=True)
 
