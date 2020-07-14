@@ -104,26 +104,23 @@ if uploaded_file is not None:
         novo_df = pd.concat([df, filtro_ref], axis=1, sort=False)
 
         #remove as colunas para melhor visualizacao
-        novo_df2 = novo_df.drop(columns=['Empresa', 'Hora', 'Refeicao'])
+        novo_df2 = novo_df.drop(columns=['Empresa','Funcionario','Hora','Refeicao'])
 
         # criar indice para agrupar refeicoes por dia
         # estilo contador para adiconar preco diferente
-        mat_dia = novo_df2.groupby(['Matricula','Funcionario','Data']).agg('count')
+        mat_dia = novo_df2.groupby(['Matricula','Data']).sum()
         st.write(mat_dia)
         st.write("Linha / Colunas: ", mat_dia.shape)
         #funcao para gerar downlod da data frame tratado
+        mat_dia.to_csv('relatorio_refeicoes.txt', index=False)
 
+        def download_link(object_to_download, download_filename, download_link_text):
 
-        #def download_link(object_to_download, download_filename, download_link_text):
+            if isinstance(object_to_download, pd.DataFrame):
+                object_to_download = object_to_download.to_csv(index=False)
+                b64 = base64.b64encode(object_to_download.encode()).decode()
+                return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
-        #    if isinstance(object_to_download, pd.DataFrame):
-         #       object_to_download = object_to_download.to_csv(index=False)
-
-            # some strings <-> bytes conversions necessary here
-          #  b64 = base64.b64encode(object_to_download.encode()).decode()
-
-           # return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
-
-        #if st.button('Download'):
-         #   tmp_download_link = download_link(filtro_hora, 'arquivo_tratado.txt', 'Clique para salvar o arquivo')
-          #  st.markdown(tmp_download_link, unsafe_allow_html=True)
+        if st.button('Download'):
+            tmp_download_link = download_link(mat_dia, 'relatorio_refeicoes.txt', 'Clique para salvar o arquivo')
+            st.markdown(tmp_download_link, unsafe_allow_html=True)
