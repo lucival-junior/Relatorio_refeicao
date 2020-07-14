@@ -65,21 +65,22 @@ if uploaded_file is not None:
     quantidade_cafe = sum((df['Refeicao']=='CAFE') )
     quantidade_almoco = sum((df['Refeicao']=='ALMOÇO') )
     quantidade_lanche = sum((df['Refeicao']=='LANCHE') )
+    quantidade_janta = sum((df['Refeicao']=='JANTAR') )
     quantidade_ceia = sum((df['Refeicao']=='CEIA') )
-    total = (quantidade_cafe + quantidade_almoco +
-             quantidade_lanche + quantidade_ceia)
 
     if st.sidebar.checkbox('Número de Refeições'):
         lista_grafico = [quantidade_cafe,
                         quantidade_almoco,
                         quantidade_lanche,
-                        quantidade_ceia,
-                        total]
+                        quantidade_janta,
+                        quantidade_ceia]
 
-
+        #verificar para melhorar esse codigo
+        total_ref_periodo = (quantidade_cafe + quantidade_almoco +
+                            quantidade_lanche + quantidade_janta + quantidade_ceia)
 
         # configure_plotly_browser_state()
-        trace = go.Bar(x=['Café', 'Almoço', 'Lanche', 'Ceia', 'Total'],
+        trace = go.Bar(x=['Café', 'Almoço', 'Lanche', 'Janta','Ceia'],
                        y=lista_grafico)
 
         legenda = go.Layout(title='Quantidade de refeições por tipo',
@@ -88,6 +89,8 @@ if uploaded_file is not None:
                             )
         figura = go.Figure(data=trace, layout=legenda)
         st.write(figura)
+        #st.write("Total de Refeições",total_ref_periodo)
+
 
     if st.sidebar.checkbox('Filtro por horário'):
         hora_inicial = st.sidebar.text_input('Hora inicial', '06:00')
