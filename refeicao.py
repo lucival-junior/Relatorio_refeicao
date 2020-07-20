@@ -4,11 +4,8 @@ import pandas as pd
 from PIL import Image
 import  time, datetime
 import base64
-import plotly.offline as py
 import plotly.graph_objs as go
-import altair as alt
-import plotly.express as px
-import matplotlib.pyplot as plt
+
 
 #carrega logo do empresa
 image = Image.open('logo-grupo-sococo.png')
@@ -84,13 +81,16 @@ if uploaded_file is not None:
 
         # criar indice para agrupar refeicoes por dia
         # 'estilo' contador para adiconar preco diferente
-        mat_dia = novo_df2.groupby(['Matricula','Funcionario','Data']).sum()
+        ref_dia = novo_df2.groupby(['Matricula', 'Funcionario', 'Data']).sum()
 
         #adiciona novas colunas para visualização
-        mat_dia['VALOR_FUN'] = 0
-        mat_dia['VALOR_INT'] = 0
-        mat_dia['DESCONTAR'] = 0
+        ref_dia['NUM_REFEICOES'] = 0
+        #soma a quantidade de refeicoes por dia para posteriormente realizar o filtro do excedendte
+        ref_dia['NUM_REFEICOES'] = ref_dia['ALMOÇO'] + ref_dia['CAFE'] + ref_dia['CEIA'] + ref_dia['JANTAR'] + ref_dia['LANCHE']
 
+        #filtro para saber a quantidade de funcionários que fizrem alguma refeicao extrar
+        refeicoes_extras = ref_dia.loc[(ref_dia['NUM_REFEICOES'] >= 3) | (ref_dia['ALMOÇO'] == 2) | (ref_dia['CAFE'] == 2) | (ref_dia['CEIA'] == 2) | (ref_dia['JANTAR'] == 2) | (ref_dia['LANCHE'] == 2)]
+        refeicoes_extras.to_csv('refeicoes_extras.txt')
 #----------------------------------------------------------#
         #calculo valor pago pelo almoco
         def almoco(alm):
@@ -101,7 +101,7 @@ if uploaded_file is not None:
           else:
             return 0
 
-        calculo_almoco = mat_dia.apply(almoco, axis=1)
+        calculo_almoco = ref_dia.apply(almoco, axis=1)
 
         #calculo valor pago pelo Café
         def cafe(caf):
@@ -111,7 +111,7 @@ if uploaded_file is not None:
             return (caf['CAFE'] * 3.41) - 2.73
           else:
             return 0
-        calculo_cafe = mat_dia.apply(cafe, axis=1)
+        calculo_cafe = ref_dia.apply(cafe, axis=1)
 
         #calculo valor pago pelo Ceia
         def ceia(cei):
@@ -121,7 +121,7 @@ if uploaded_file is not None:
             return (cei['CEIA'] * 8.85) - 7.08
           else:
             return 0
-        calculo_ceia = mat_dia.apply(ceia, axis=1)
+        calculo_ceia = ref_dia.apply(ceia, axis=1)
 
         #calculo valor pago pelo Jantar
         def jantar(jan):
@@ -131,7 +131,7 @@ if uploaded_file is not None:
             return (jan['JANTAR'] * 8.85) - 7.08
           else:
             return 0
-        calculo_janta = mat_dia.apply(jantar, axis=1)
+        calculo_janta = ref_dia.apply(jantar, axis=1)
 
         #calculo valor pago pelo Lanche
         def lanche(lan):
@@ -141,15 +141,19 @@ if uploaded_file is not None:
             return (lan['LANCHE'] * 3.41) - 2.73
           else:
             return 0
-        calculo_lanche = mat_dia.apply(lanche, axis=1)
+        calculo_lanche = ref_dia.apply(lanche, axis=1)
 
 
-        mat_dia['DESCONTAR'] = calculo_almoco + calculo_cafe + calculo_ceia + calculo_janta + calculo_lanche
+        ref_dia['DESCONTAR'] = calculo_almoco + calculo_cafe + calculo_ceia + calculo_janta + calculo_lanche
         st.markdown('Refeições por funcionário')
-        st.write(mat_dia)
-        st.write("Linha / Colunas: ", mat_dia.shape)
+        st.write(ref_dia)
+        st.write("Linha / Colunas: ", ref_dia.shape)
         #salva o arquivo em formato de texto com os INDÍCES para download
-        mat_dia.to_csv('relatorio_refeicoes.txt')
+        ref_dia.to_csv('relatorio_refeicoes.txt')
+
+        st.markdown('Funcionário com Refeições EXTRAS')
+        st.write(refeicoes_extras)
+        st.write("Linha / Colunas: ", refeicoes_extras.shape)
 
         #funcao para gerar downlod da data frame tratado
         def download_link(object_to_download, download_filename, download_link_text):
@@ -160,7 +164,7 @@ if uploaded_file is not None:
                 return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
         if st.button('Download'):
-            tmp_download_link = download_link(mat_dia, 'relatorio_refeicoes.txt', 'Clique para salvar o arquivo')
+            tmp_download_link = download_link(refeicoes_extras, 'refeicoes_extras.txt', 'Clique para salvar o arquivo')
             st.markdown(tmp_download_link, unsafe_allow_html=True)
 
 #----------------------------------------------------------#
