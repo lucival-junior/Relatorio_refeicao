@@ -4,12 +4,15 @@ import pandas as pd
 from PIL import Image
 import  time, datetime
 import base64
+import plotly.offline as py
 import plotly.graph_objs as go
-
+import altair as alt
+import plotly.express as px
+import matplotlib.pyplot as plt
 
 #carrega logo do empresa
-image = Image.open('logo-grupo-sococo.png')
-st.image(image,width=700 , caption='Relatório de Refeições')
+image = Image.open('sococo-logo.png')
+st.image(image,width=200 , caption='Relatório de Refeições')
 
 #variaveis de arquivo saida
 primeira_limpeza = "primeira_limpeza.txt"
@@ -81,79 +84,83 @@ if uploaded_file is not None:
 
         # criar indice para agrupar refeicoes por dia
         # 'estilo' contador para adiconar preco diferente
-        ref_dia = novo_df2.groupby(['Matricula', 'Funcionario', 'Data']).sum()
+        mat_dia = novo_df2.groupby(['Matricula','Funcionario','Data']).sum()
 
         #adiciona novas colunas para visualização
-        ref_dia['NUM_REFEICOES'] = 0
-        #soma a quantidade de refeicoes por dia para posteriormente realizar o filtro do excedendte
-        ref_dia['NUM_REFEICOES'] = ref_dia['ALMOÇO'] + ref_dia['CAFE'] + ref_dia['CEIA'] + ref_dia['JANTAR'] + ref_dia['LANCHE']
+        # mat_dia['VALOR_FUN'] = 0
+        # mat_dia['VALOR_INT'] = 0
+        mat_dia['DESCONTAR'] = 0
 
-        #filtro para saber a quantidade de funcionários que fizrem alguma refeicao extrar
-        refeicoes_extras = ref_dia.loc[(ref_dia['NUM_REFEICOES'] >= 3) | (ref_dia['ALMOÇO'] == 2) | (ref_dia['CAFE'] == 2) | (ref_dia['CEIA'] == 2) | (ref_dia['JANTAR'] == 2) | (ref_dia['LANCHE'] == 2)]
-        refeicoes_extras.to_csv('refeicoes_extras.txt')
 #----------------------------------------------------------#
         #calculo valor pago pelo almoco
-        def almoco(alm):
-          if alm['ALMOÇO'] == 1:
-            return 1.77
-          elif 0 != alm['ALMOÇO'] > 1:
-            return (alm['ALMOÇO'] * 8.85) - 7.08
-          else:
-            return 0
+        # def almoco(alm):
+        #   if alm['ALMOÇO'] == 1:
+        #     return 1.77
+        #   elif 0 != alm['ALMOÇO'] > 1:
+        #     return (alm['ALMOÇO'] * 8.85) - 7.08
+        #   else:
+        #     return 0
+        #
+        # calculo_almoco = mat_dia.apply(almoco, axis=1)
 
-        calculo_almoco = ref_dia.apply(almoco, axis=1)
+        # #calculo valor pago pelo Café
+        # def cafe(caf):
+        #   if caf['CAFE'] == 1:
+        #     return 0.68
+        #   elif 0 != caf['CAFE'] > 1:
+        #     return (caf['CAFE'] * 3.41) - 2.73
+        #   else:
+        #     return 0
+        # calculo_cafe = mat_dia.apply(cafe, axis=1)
+        #
+        # #calculo valor pago pelo Ceia
+        # def ceia(cei):
+        #   if cei['CEIA'] == 1:
+        #     return 1.77
+        #   elif 0 != cei['CEIA'] > 1:
+        #     return (cei['CEIA'] * 8.85) - 7.08
+        #   else:
+        #     return 0
+        # calculo_ceia = mat_dia.apply(ceia, axis=1)
+        #
+        # #calculo valor pago pelo Jantar
+        # def jantar(jan):
+        #   if jan['JANTAR'] == 1:
+        #     return 1.77
+        #   elif 0 != jan['JANTAR'] > 1:
+        #     return (jan['JANTAR'] * 8.85) - 7.08
+        #   else:
+        #     return 0
+        # calculo_janta = mat_dia.apply(jantar, axis=1)
+        #
+        # #calculo valor pago pelo Lanche
+        # def lanche(lan):
+        #   if lan['LANCHE'] == 1:
+        #     return 0.68
+        #   elif 0 != lan['LANCHE'] > 1:
+        #     return (lan['LANCHE'] * 3.41) - 2.73
+        #   else:
+        #     return 0
+        # calculo_lanche = mat_dia.apply(lanche, axis=1)
 
-        #calculo valor pago pelo Café
-        def cafe(caf):
-          if caf['CAFE'] == 1:
-            return 0.68
-          elif 0 != caf['CAFE'] > 1:
-            return (caf['CAFE'] * 3.41) - 2.73
-          else:
-            return 0
-        calculo_cafe = ref_dia.apply(cafe, axis=1)
-
-        #calculo valor pago pelo Ceia
-        def ceia(cei):
-          if cei['CEIA'] == 1:
-            return 1.77
-          elif 0 != cei['CEIA'] > 1:
-            return (cei['CEIA'] * 8.85) - 7.08
-          else:
-            return 0
-        calculo_ceia = ref_dia.apply(ceia, axis=1)
-
-        #calculo valor pago pelo Jantar
-        def jantar(jan):
-          if jan['JANTAR'] == 1:
-            return 1.77
-          elif 0 != jan['JANTAR'] > 1:
-            return (jan['JANTAR'] * 8.85) - 7.08
-          else:
-            return 0
-        calculo_janta = ref_dia.apply(jantar, axis=1)
-
-        #calculo valor pago pelo Lanche
-        def lanche(lan):
-          if lan['LANCHE'] == 1:
-            return 0.68
-          elif 0 != lan['LANCHE'] > 1:
-            return (lan['LANCHE'] * 3.41) - 2.73
-          else:
-            return 0
-        calculo_lanche = ref_dia.apply(lanche, axis=1)
+        #soma de valores na coluna DESCONTAR
+        mat_dia['DESCONTAR'] = mat_dia['ALMOÇO'] + mat_dia['CAFE']+ mat_dia['CEIA']+ \
+                               mat_dia['JANTAR']+ mat_dia['LANCHE']
 
 
-        ref_dia['DESCONTAR'] = calculo_almoco + calculo_cafe + calculo_ceia + calculo_janta + calculo_lanche
         st.markdown('Refeições por funcionário')
-        st.write(ref_dia)
-        st.write("Linha / Colunas: ", ref_dia.shape)
-        #salva o arquivo em formato de texto com os INDÍCES para download
-        ref_dia.to_csv('relatorio_refeicoes.txt')
+        st.write(mat_dia)
+        st.write("Linha / Colunas: ", mat_dia.shape)
 
-        st.markdown('Funcionário com Refeições EXTRAS')
-        st.write(refeicoes_extras)
-        st.write("Linha / Colunas: ", refeicoes_extras.shape)
+        # Filtro para saber quem teve refeicoes em excesso.
+        filtrado = mat_dia.loc[(mat_dia['DESCONTAR'] >= 3) | (mat_dia['ALMOÇO']==2) |(mat_dia['CAFE']==2) |
+                               (mat_dia['CEIA']==2) |  (mat_dia['JANTAR']==2) | (mat_dia['LANCHE']==2) ]
+        st.markdown('Refeições EXTRA por funcionário')
+        st.write(filtrado)
+        st.write("Linha / Colunas: ", filtrado.shape)
+
+        #salva o arquivo em formato de texto com os INDÍCES para download
+        filtrado.to_csv('refeicoes_extras.txt')
 
         #funcao para gerar downlod da data frame tratado
         def download_link(object_to_download, download_filename, download_link_text):
@@ -164,7 +171,7 @@ if uploaded_file is not None:
                 return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
         if st.button('Download'):
-            tmp_download_link = download_link(refeicoes_extras, 'refeicoes_extras.txt', 'Clique para salvar o arquivo')
+            tmp_download_link = download_link(filtrado, 'refeicoes_extras.txt', 'Clique para salvar o arquivo')
             st.markdown(tmp_download_link, unsafe_allow_html=True)
 
 #----------------------------------------------------------#
@@ -196,3 +203,31 @@ if uploaded_file is not None:
         figura = go.Figure(data=trace, layout=legenda)
         st.write(figura)
 
+#-------------------------------------------------------------------------#
+        #Gráfico de reficoes extras
+        if st.checkbox('Quantidade EXTRA de Refeições'):
+            quantidade_cafe_filtrado = sum(filtrado['CAFE'])
+            quantidade_almoco_filtrado = sum(filtrado['ALMOÇO'])
+            quantidade_lanche_filtrado = sum(filtrado['LANCHE'])
+            quantidade_janta_filtrado = sum(filtrado['JANTAR'])
+            quantidade_ceia_filtrado = sum(filtrado['CEIA'])
+
+            lista_grafico_filtrado = [quantidade_cafe_filtrado, quantidade_almoco_filtrado,
+                             quantidade_lanche_filtrado, quantidade_janta_filtrado,
+                             quantidade_ceia_filtrado]
+
+            # verificar para melhorar esse codigo
+            total_ref_periodo_filtrado = (quantidade_cafe_filtrado + quantidade_almoco_filtrado +
+                                 quantidade_lanche_filtrado + quantidade_janta_filtrado +
+                                 quantidade_ceia_filtrado)
+
+            # configure_plotly_browser_state()
+            trace = go.Bar(x=['Café', 'Almoço', 'Lanche', 'Janta', 'Ceia'],
+                           y=lista_grafico_filtrado)
+
+            legenda = go.Layout(title='Quantidade de refeições por tipo',
+                                xaxis={'title': 'Tipo de Refeição'},
+                                yaxis={'title': 'Quantidade'}
+                                )
+            figura_filtrado = go.Figure(data=trace, layout=legenda)
+            st.write(figura_filtrado)
