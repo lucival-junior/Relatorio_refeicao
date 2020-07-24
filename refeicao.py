@@ -89,62 +89,93 @@ if uploaded_file is not None:
         #adiciona novas colunas para visualização
         # mat_dia['VALOR_FUN'] = 0
         # mat_dia['VALOR_INT'] = 0
-        mat_dia['DESCONTAR'] = 0
+
 
 #----------------------------------------------------------#
-        #calculo valor pago pelo almoco
-        # def almoco(alm):
-        #   if alm['ALMOÇO'] == 1:
-        #     return 1.77
-        #   elif 0 != alm['ALMOÇO'] > 1:
-        #     return (alm['ALMOÇO'] * 8.85) - 7.08
-        #   else:
-        #     return 0
-        #
-        # calculo_almoco = mat_dia.apply(almoco, axis=1)
+        #Funcao para calculo das refeicoes
+        def lanche(lan):
+            if (lan['LANCHE'] == 1) & (lan['CAFE'] == 0):
+                return lan['LANCHE'] * 0 and lan['CAFE'] * 0
+            elif lan['LANCHE'] == 1 & lan['CAFE'] == 1:
+                return lan['LANCHE'] * 0 and lan['CAFE'] * 3.41
+            elif (lan['LANCHE'] > 1) & (lan['CAFE'] == 0):
+                return lan['LANCHE'] * 3.41 - 3.41
+            elif (lan['LANCHE'] > 1) & (lan['CAFE'] >= 1):
+                return lan['LANCHE'] * 3.41
+            else:
+                return 0
+        calculo_lanche = mat_dia.apply(lanche, axis=1)
 
-        # #calculo valor pago pelo Café
-        # def cafe(caf):
-        #   if caf['CAFE'] == 1:
-        #     return 0.68
-        #   elif 0 != caf['CAFE'] > 1:
-        #     return (caf['CAFE'] * 3.41) - 2.73
-        #   else:
-        #     return 0
-        # calculo_cafe = mat_dia.apply(cafe, axis=1)
-        #
-        # #calculo valor pago pelo Ceia
-        # def ceia(cei):
-        #   if cei['CEIA'] == 1:
-        #     return 1.77
-        #   elif 0 != cei['CEIA'] > 1:
-        #     return (cei['CEIA'] * 8.85) - 7.08
-        #   else:
-        #     return 0
-        # calculo_ceia = mat_dia.apply(ceia, axis=1)
-        #
-        # #calculo valor pago pelo Jantar
-        # def jantar(jan):
-        #   if jan['JANTAR'] == 1:
-        #     return 1.77
-        #   elif 0 != jan['JANTAR'] > 1:
-        #     return (jan['JANTAR'] * 8.85) - 7.08
-        #   else:
-        #     return 0
-        # calculo_janta = mat_dia.apply(jantar, axis=1)
-        #
-        # #calculo valor pago pelo Lanche
-        # def lanche(lan):
-        #   if lan['LANCHE'] == 1:
-        #     return 0.68
-        #   elif 0 != lan['LANCHE'] > 1:
-        #     return (lan['LANCHE'] * 3.41) - 2.73
-        #   else:
-        #     return 0
-        # calculo_lanche = mat_dia.apply(lanche, axis=1)
+        def cafe(caf):
+            if (caf['LANCHE'] == 1) & (caf['CAFE'] == 0):
+                return caf['CAFE'] * 0
+            elif caf['LANCHE'] == 1 & caf['CAFE'] == 1:
+                return caf['CAFE'] * 3.41
+            elif (caf['LANCHE'] == 0) & (caf['CAFE'] > 1):
+                return caf['CAFE'] * 3.41 - 3.41
+            elif (caf['LANCHE'] >= 1) & (caf['CAFE'] > 1):
+                return caf['CAFE'] * 3.41
+            else:
+                return 0
+        calculo_cafe = mat_dia.apply(cafe, axis=1)
+
+        def almoco(alm):
+            if (alm['ALMOÇO'] == 1) & (alm['CEIA'] == 0 & alm['JANTAR'] == 0):
+                return alm['ALMOÇO'] * 0
+            elif (alm['ALMOÇO'] == 1) & (alm['CEIA'] == 1 & alm['JANTAR'] == 1):
+                return alm['ALMOÇO'] * 0
+            elif (alm['ALMOÇO'] > 1) & (alm['CEIA'] == 0 & alm['JANTAR'] == 0):
+                return alm['ALMOÇO'] * 8.85 - 8.85
+            elif (alm['ALMOÇO'] > 1) & (alm['CEIA'] == 1 & alm['JANTAR'] == 0):
+                return alm['ALMOÇO'] * 8.85
+            elif (alm['JANTAR'] == 1) & (alm['CEIA'] == 0 & alm['ALMOÇO'] == 1):
+                return alm['ALMOÇO'] * 8.85
+            else:
+                return 0
+        calculo_almoco = mat_dia.apply(almoco, axis=1)
+
+        def ceia(cei):
+            if (cei['ALMOÇO'] == 1) & (cei['CEIA'] == 0 & cei['JANTAR'] == 0):
+                return cei['CEIA'] * 0
+            elif (cei['ALMOÇO'] == 1) & (cei['CEIA'] == 1 & cei['JANTAR'] == 1):
+                return cei['CEIA'] * 8.85
+            elif (cei['ALMOÇO'] > 1) & (cei['CEIA'] == 0 & cei['JANTAR'] == 0):
+                return cei['CEIA'] * 0
+            elif (cei['ALMOÇO'] > 1) & (cei['CEIA'] == 1 & cei['JANTAR'] == 0):
+                return cei['CEIA'] * 8.85
+            elif (cei['ALMOÇO'] == 0) & (cei['CEIA'] > 1 & cei['JANTAR'] == 0):
+                return cei['CEIA'] * 8.85 - 8.85
+            elif (cei['ALMOÇO'] == 0) & (cei['CEIA'] == 0 & cei['JANTAR'] > 1):
+                return cei['CEIA'] * 0
+            elif (cei['ALMOÇO'] == 0) & (cei['CEIA'] == 1 & cei['JANTAR'] == 1):
+                return cei['CEIA'] * 8.85
+            elif (cei['ALMOÇO'] == 1) & (cei['CEIA'] == 0 & cei['JANTAR'] == 1):
+                return cei['CEIA'] * 0
+            else:
+                return 0
+        calculo_ceia = mat_dia.apply(ceia, axis=1)
+
+        def janta(jan):
+            if (jan['ALMOÇO'] == 1) & (jan['CEIA'] == 0 & jan['JANTAR'] == 0):
+                return jan['JANTAR'] * 8.85
+            elif (jan['ALMOÇO'] == 1) & (jan['CEIA'] == 1 & jan['JANTAR'] == 1):
+                return jan['JANTAR'] * 8.85
+            elif (jan['ALMOÇO'] > 1) & (jan['CEIA'] == 0 & jan['JANTAR'] == 0):
+                return jan['JANTAR'] * 0
+            elif (jan['ALMOÇO'] > 1) & (jan['CEIA'] == 1 & jan['JANTAR'] == 0):
+                return jan['JANTAR'] * 0
+            elif (jan['ALMOÇO'] == 0) & (jan['CEIA'] == 0 & jan['JANTAR'] > 1):
+                return jan['JANTAR'] * 8.85 - 8.85
+            elif (jan['ALMOÇO'] == 0) & (jan['CEIA'] == 1 & jan['JANTAR'] == 1):
+                return jan['JANTAR'] * 8.85 - 8.85
+            elif (jan['ALMOÇO'] == 1) & (jan['CEIA'] == 0 & jan['JANTAR'] == 1):
+                return jan['JANTAR'] * 8.85
+            else:
+                return 0
+        calculo_janta = mat_dia.apply(janta, axis=1)
 
         #soma de valores na coluna DESCONTAR
-        mat_dia['DESCONTAR'] = mat_dia['ALMOÇO'] + mat_dia['CAFE']+ mat_dia['CEIA']+ \
+        mat_dia['NUM_REFEICOES'] = mat_dia['ALMOÇO'] + mat_dia['CAFE']+ mat_dia['CEIA']+ \
                                mat_dia['JANTAR']+ mat_dia['LANCHE']
 
 
@@ -153,8 +184,11 @@ if uploaded_file is not None:
         st.write("Linha / Colunas: ", mat_dia.shape)
 
         # Filtro para saber quem teve refeicoes em excesso.
-        filtrado = mat_dia.loc[(mat_dia['DESCONTAR'] >= 3) | (mat_dia['ALMOÇO']==2) |(mat_dia['CAFE']==2) |
+        filtrado = mat_dia.loc[(mat_dia['NUM_REFEICOES'] >= 3) | (mat_dia['ALMOÇO']==2) |(mat_dia['CAFE']==2) |
                                (mat_dia['CEIA']==2) |  (mat_dia['JANTAR']==2) | (mat_dia['LANCHE']==2) ]
+
+        filtrado['DESCONTAR'] = calculo_almoco + calculo_cafe + calculo_ceia + calculo_janta + calculo_lanche
+
         st.markdown('Refeições EXTRA por funcionário')
         st.write(filtrado)
         st.write("Linha / Colunas: ", filtrado.shape)
