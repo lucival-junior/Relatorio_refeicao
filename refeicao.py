@@ -2,17 +2,14 @@
 import streamlit as st
 import pandas as pd
 from PIL import Image
-import  time, datetime
+import  time
 import base64
-import plotly.offline as py
 import plotly.graph_objs as go
-import altair as alt
-import plotly.express as px
-import matplotlib.pyplot as plt
+import numpy as np
 
 #carrega logo do empresa
-image = Image.open('sococo-logo.png')
-st.image(image,width=200 , caption='Relatório de Refeições')
+image = Image.open('logo-grupo-sococo.png')
+st.image(image,width=700 , caption='Cálculo de Refeições Extras')
 
 #variaveis de arquivo saida
 primeira_limpeza = "primeira_limpeza.txt"
@@ -119,66 +116,31 @@ if uploaded_file is not None:
                 return 0
         calculo_cafe = mat_dia.apply(cafe, axis=1)
 
-        def almoco(alm):
-            if (alm['ALMOÇO'] == 1) & (alm['CEIA'] == 0 & alm['JANTAR'] == 0):
-                return alm['ALMOÇO'] * 0
-            elif (alm['ALMOÇO'] == 1) & (alm['CEIA'] == 1 & alm['JANTAR'] == 1):
-                return alm['ALMOÇO'] * 0
-            elif (alm['ALMOÇO'] > 1) & (alm['CEIA'] == 0 & alm['JANTAR'] == 0):
-                return alm['ALMOÇO'] * 8.85 - 8.85
-            elif (alm['ALMOÇO'] > 1) & (alm['CEIA'] == 1 & alm['JANTAR'] == 0):
-                return alm['ALMOÇO'] * 8.85
-            elif (alm['JANTAR'] == 1) & (alm['CEIA'] == 0 & alm['ALMOÇO'] == 1):
-                return alm['ALMOÇO'] * 8.85
-            else:
-                return 0
-        calculo_almoco = mat_dia.apply(almoco, axis=1)
 
-        def ceia(cei):
-            if (cei['ALMOÇO'] == 1) & (cei['CEIA'] == 0 & cei['JANTAR'] == 0):
-                return cei['CEIA'] * 0
-            elif (cei['ALMOÇO'] == 1) & (cei['CEIA'] == 1 & cei['JANTAR'] == 1):
-                return cei['CEIA'] * 8.85
-            elif (cei['ALMOÇO'] > 1) & (cei['CEIA'] == 0 & cei['JANTAR'] == 0):
-                return cei['CEIA'] * 0
-            elif (cei['ALMOÇO'] > 1) & (cei['CEIA'] == 1 & cei['JANTAR'] == 0):
-                return cei['CEIA'] * 8.85
-            elif (cei['ALMOÇO'] == 0) & (cei['CEIA'] > 1 & cei['JANTAR'] == 0):
-                return cei['CEIA'] * 8.85 - 8.85
-            elif (cei['ALMOÇO'] == 0) & (cei['CEIA'] == 0 & cei['JANTAR'] > 1):
-                return cei['CEIA'] * 0
-            elif (cei['ALMOÇO'] == 0) & (cei['CEIA'] == 1 & cei['JANTAR'] == 1):
-                return cei['CEIA'] * 8.85
-            elif (cei['ALMOÇO'] == 1) & (cei['CEIA'] == 0 & cei['JANTAR'] == 1):
-                return cei['CEIA'] * 0
-            else:
-                return 0
-        calculo_ceia = mat_dia.apply(ceia, axis=1)
-
-        def janta(jan):
-            if (jan['ALMOÇO'] == 1) & (jan['CEIA'] == 0 & jan['JANTAR'] == 0):
-                return jan['JANTAR'] * 8.85
-            elif (jan['ALMOÇO'] == 1) & (jan['CEIA'] == 1 & jan['JANTAR'] == 1):
-                return jan['JANTAR'] * 8.85
-            elif (jan['ALMOÇO'] > 1) & (jan['CEIA'] == 0 & jan['JANTAR'] == 0):
-                return jan['JANTAR'] * 0
-            elif (jan['ALMOÇO'] > 1) & (jan['CEIA'] == 1 & jan['JANTAR'] == 0):
-                return jan['JANTAR'] * 0
-            elif (jan['ALMOÇO'] == 0) & (jan['CEIA'] == 0 & jan['JANTAR'] > 1):
-                return jan['JANTAR'] * 8.85 - 8.85
-            elif (jan['ALMOÇO'] == 0) & (jan['CEIA'] == 1 & jan['JANTAR'] == 1):
-                return jan['JANTAR'] * 8.85 - 8.85
-            elif (jan['ALMOÇO'] == 1) & (jan['CEIA'] == 0 & jan['JANTAR'] == 1):
-                return jan['JANTAR'] * 8.85
-            else:
-                return 0
-        calculo_janta = mat_dia.apply(janta, axis=1)
+        # lista de condicoes para desconto
+        conditions = [
+            (mat_dia['ALMOÇO'] == 1) & (mat_dia['CEIA'] == 0) & (mat_dia['JANTAR'] == 0),
+            (mat_dia['ALMOÇO'] == 1) & (mat_dia['CEIA'] == 1) & (mat_dia['JANTAR'] == 1),
+            (mat_dia['ALMOÇO'] == 1) & (mat_dia['CEIA'] == 1) & (mat_dia['JANTAR'] == 0),
+            (mat_dia['ALMOÇO'] == 1) & (mat_dia['CEIA'] == 0) & (mat_dia['JANTAR'] == 1),
+            (mat_dia['ALMOÇO'] > 1) & (mat_dia['CEIA'] == 0) & (mat_dia['JANTAR'] == 0),
+            (mat_dia['ALMOÇO'] > 1) & (mat_dia['CEIA'] != 0) | (mat_dia['JANTAR'] != 0),
+            (mat_dia['ALMOÇO'] == 0) & (mat_dia['CEIA'] != 0) | (mat_dia['JANTAR'] != 0)]
+        # escolhas de acordo com a lista de desconto ocorrida
+        choices = [0.0,
+                   (mat_dia['ALMOÇO'] * 8.85 + mat_dia['CEIA'] * 8.85 + mat_dia['JANTAR'] * 8.85) - 8.85,
+                   (mat_dia['ALMOÇO'] * 8.85 + mat_dia['CEIA'] * 8.85 + mat_dia['JANTAR'] * 8.85) - 8.85,
+                   (mat_dia['ALMOÇO'] * 8.85 + mat_dia['CEIA'] * 8.85 + mat_dia['JANTAR'] * 8.85) - 8.85,
+                   (mat_dia['ALMOÇO'] * 8.85) - 8.85,
+                   (mat_dia['ALMOÇO'] * 8.85 + mat_dia['CEIA'] * 8.85 + mat_dia['JANTAR'] * 8.85) - 8.85,
+                   (mat_dia['ALMOÇO'] * 0 + mat_dia['CEIA'] * 8.85 + mat_dia['JANTAR'] * 8.85) - 8.85]
 
         #soma de valores na coluna DESCONTAR
         mat_dia['NUM_REFEICOES'] = mat_dia['ALMOÇO'] + mat_dia['CAFE']+ mat_dia['CEIA']+ \
                                mat_dia['JANTAR']+ mat_dia['LANCHE']
 
-
+        mat_dia['DESCONTO_1'] = calculo_cafe + calculo_lanche
+        mat_dia['DESCONTO_2'] = np.select(conditions, choices, default=0.0)
         st.markdown('Refeições por funcionário')
         st.write(mat_dia)
         st.write("Linha / Colunas: ", mat_dia.shape)
@@ -187,7 +149,7 @@ if uploaded_file is not None:
         filtrado = mat_dia.loc[(mat_dia['NUM_REFEICOES'] >= 3) | (mat_dia['ALMOÇO']==2) |(mat_dia['CAFE']==2) |
                                (mat_dia['CEIA']==2) |  (mat_dia['JANTAR']==2) | (mat_dia['LANCHE']==2) ]
 
-        filtrado['DESCONTAR'] = calculo_almoco + calculo_cafe + calculo_ceia + calculo_janta + calculo_lanche
+        filtrado['DESCONTO_TOTAL'] = mat_dia['DESCONTO_1'] + mat_dia['DESCONTO_2']
 
         st.markdown('Refeições EXTRA por funcionário')
         st.write(filtrado)
