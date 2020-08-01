@@ -6,18 +6,15 @@ import  time
 import base64
 import plotly.graph_objs as go
 import numpy as np
+import limpeza
 
 #carrega logo do empresa
 image = Image.open('logo-grupo-sococo.png')
 st.image(image,width=700 , caption='Cálculo de Refeições Extras')
 
-#variaveis de arquivo saida
-primeira_limpeza = "primeira_limpeza.txt"
-segunda_limpeza = "segunda_limpeza.txt"
-
-#busca para limpeza
-search_for = '21'
-search_for2 = "SOCOCO"
+#st.set_option('deprecation.showfileUploaderEncoding', False)
+empresa = st.selectbox("Selecione a empresa",
+                ('SOCOCO', 'ACQUA', 'AMAFIBRA'))
 
 #recebe o arquivo de texto do usuário
 uploaded_file = st.file_uploader("Selecione ou arraste seu arquivo gerado pelo TSA: ",
@@ -29,25 +26,14 @@ if uploaded_file is not None:
 # se o arquivo foi carregado, le o arquivo e gera um novo arquivo formatado
     data = pd.read_fwf(uploaded_file, widths=colunas, header=None)
     data.to_csv('arquivo_sem_tratamento.txt', index=False)
-    # st.write(data)
 
-# Inicia a primeira limpeza do arquivo gerado acima.
-# Gera um novo aquivo com a primeira limpeza concluida.
-    with open(primeira_limpeza, 'w', encoding="windows-1252") as out_f:
-        with open('arquivo_sem_tratamento.txt', "r") as in_f:
-            for line in in_f:
-                if search_for in line:
-                    out_f.write(line)
-
-# Inicia a segunda limpeza do arquivo gerado acima.
-# Gera o arquivo final limpo
-    with open(segunda_limpeza, 'w', encoding="windows-1252") as out_f:
-        with open('primeira_limpeza.txt', "r", encoding="windows-1252") as in_f:
-            for line in in_f:
-                if search_for2 in line:
-                    pass
-                else:
-                  out_f.write(line)
+    # Inicia a primeira limpeza do arquivo gerado acima.
+    if empresa == 'SOCOCO':
+        limpeza.limpeza_sococo()
+    elif empresa == 'ACQUA':
+        limpeza.limpeza_acqua()
+    else:
+        limpeza.limpeza_amafibra()
 
 #carrega arquivo da segunda limpeza e gera o arquivo final limpo para mostrar na tela
     df = pd.read_csv('segunda_limpeza.txt', sep=',')
@@ -71,7 +57,8 @@ if uploaded_file is not None:
 
         #inicio de novo tratamento e criacao de novas colunas
 
-        #trasnformar categoria REFEICAO para fator (ALMOÇO - 0/1	CAFE- 0/1	CEIA- 0/1	JANTAR- 0/1	LANCHE- 0/1)
+        #trasnformar categoria REFEICAO para fator
+        #(ALMOÇO - 0/1	CAFE- 0/1	CEIA- 0/1	JANTAR- 0/1	LANCHE- 0/1)
         filtro_ref = pd.get_dummies(df['Refeicao'])
         #concatena df inicial com novas colunas geradas pelo fator
         novo_df = pd.concat([df, filtro_ref], axis=1, sort=False)
@@ -82,10 +69,6 @@ if uploaded_file is not None:
         # criar indice para agrupar refeicoes por dia
         # 'estilo' contador para adiconar preco diferente
         mat_dia = novo_df2.groupby(['Matricula','Funcionario','Data']).sum()
-
-        #adiciona novas colunas para visualização
-        # mat_dia['VALOR_FUN'] = 0
-        # mat_dia['VALOR_INT'] = 0
 
 
 #----------------------------------------------------------#
@@ -150,6 +133,8 @@ if uploaded_file is not None:
                                (mat_dia['CEIA']==2) |  (mat_dia['JANTAR']==2) | (mat_dia['LANCHE']==2) ]
 
         filtrado['DESCONTO_TOTAL'] = mat_dia['DESCONTO_1'] + mat_dia['DESCONTO_2']
+        filtrado.DESCONTO_2 = filtrado.DESCONTO_2.round(2)
+        filtrado.DESCONTO_TOTAL = filtrado.DESCONTO_TOTAL.round(2)
 
         st.markdown('Refeições EXTRA por funcionário')
         st.write(filtrado)
