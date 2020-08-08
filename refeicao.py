@@ -42,21 +42,8 @@ if uploaded_file is not None:
 
     with st.spinner('Aguarde o carregamento do arquivo...'):
         time.sleep(5)
-    #st.success('Concluido!')
-    #st.write(df)
-    #st.write("Linha / Colunas: ", df.shape)
-
 
     if st.checkbox('Desconto por Funcionário'):
-        #hora_inicial = st.sidebar.text_input('Hora inicial', '06:00')
-        #hora_final = st.sidebar.text_input('Hora final', '08:00')
-
-        #filtro_hora = df.loc[(df['Hora'] >= hora_inicial) & (df['Hora']<= hora_final)]
-        #st.write(filtro_hora)
-        #st.write("Linha / Colunas: ",filtro_hora.shape)
-
-        #inicio de novo tratamento e criacao de novas colunas
-
         #trasnformar categoria REFEICAO para fator
         #(ALMOÇO - 0/1	CAFE- 0/1	CEIA- 0/1	JANTAR- 0/1	LANCHE- 0/1)
         filtro_ref = pd.get_dummies(df['Refeicao'])
@@ -140,8 +127,15 @@ if uploaded_file is not None:
         st.write(filtrado)
         st.write("Linha / Colunas: ", filtrado.shape)
 
+        #Organizando para contacter base de dados tratato
+        base_tratada = filtrado.reset_index(level=['Matricula', 'Funcionario', 'Data'])
+        base_tratada = pd.concat([base_tratada, df], ignore_index=True, axis=1, sort=False)
+        base_tratada.columns = ['MATRICULA', 'FUNCIONARIO', 'DATA', 'ALMOCO', 'CAFE', 'CEIA',
+                                'JANTAR', 'LANCHE', 'NUM_REFEICAO', 'DESCONTO_1', 'DESCONTO_2', 'DESCONTO_TOTAL',
+                                'EMPRESA', 'MATRICULA', 'FUNCIONARIO', 'DATA', 'HORA', 'REFEICAO']
         #salva o arquivo em formato de texto com os INDÍCES para download
-        filtrado.to_csv('refeicoes_extras.txt')
+        base_tratada.to_csv('base_tratada.txt',index=False)
+
 
         #funcao para gerar downlod da data frame tratado
         def download_link(object_to_download, download_filename, download_link_text):
@@ -151,9 +145,9 @@ if uploaded_file is not None:
                 b64 = base64.b64encode(object_to_download.encode()).decode()
                 return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
 
-        if st.button('Download'):
-            tmp_download_link = download_link(filtrado, 'refeicoes_extras.txt', 'Clique para salvar o arquivo')
-            st.markdown(tmp_download_link, unsafe_allow_html=True)
+
+        tmp_download_link = download_link(base_tratada, 'base_tratada.txt', 'Clique para salvar o arquivo')
+        st.markdown(tmp_download_link, unsafe_allow_html=True)
 
 #----------------------------------------------------------#
         #Gráfico numero de refeicoes
@@ -175,7 +169,9 @@ if uploaded_file is not None:
 
         # configure_plotly_browser_state()
         trace = go.Bar(x=['Café', 'Almoço', 'Lanche', 'Janta','Ceia'],
-                       y=lista_grafico)
+                       y=lista_grafico,
+                       text=lista_grafico,
+                       textposition='auto')
 
         legenda = go.Layout(title='Quantidade de refeições por tipo',
                             xaxis={'title': 'Tipo de Refeição'},
@@ -204,7 +200,9 @@ if uploaded_file is not None:
 
             # configure_plotly_browser_state()
             trace = go.Bar(x=['Café', 'Almoço', 'Lanche', 'Janta', 'Ceia'],
-                           y=lista_grafico_filtrado)
+                           y=lista_grafico_filtrado,
+                           text=lista_grafico_filtrado,
+                           textposition='auto')
 
             legenda = go.Layout(title='Quantidade de refeições por tipo',
                                 xaxis={'title': 'Tipo de Refeição'},
